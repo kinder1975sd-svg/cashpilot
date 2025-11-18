@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users (synced from Clerk)
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+
+  // Subscription
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  plan                   String?   @default("FREE") // FREE, GROWTH, PRO
+  planStatus             String?   @default("inactive") // active, canceled, past_due
+  subscriptionEndsAt     DateTime?
+
+  // Xero connection
+  xeroAccessToken        String?
+  xeroRefreshToken       String?
+  xeroTokenExpiry        DateTime?
+  xeroTenantId           String?
+  xeroConnectedAt        DateTime?
+
+  // QuickBooks connection
+  qbAccessToken          String?
+  qbRefreshToken         String?
+  qbTokenExpiry          DateTime?
+  qbRealmId              String?
+  qbConnectedAt          DateTime?
+
+  // Settings
+  cashBuffer             Int       @default(25000) // Minimum cash (in pence)
+  currency               String    @default("GBP")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  forecasts    Forecast[]
+  alerts       Alert[]
+}
+
+// Raw transactions from Xero/QuickBooks
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // External IDs
+  externalId  String   // Transaction ID from Xero/QB
+  source      String   // "xero" or "quickbooks"
+
+  // Transaction data
+  date        DateTime
+  amount      Int      // In pence
+  type        String   // "income" or "expense"
+  description String
+  category    String?  // Auto-categorized (payroll, rent, etc.)
+  contact     String?  // Customer/supplier name
+
+  // Metadata
+  isRecurring Boolean  @default(false)
+  confidence  Float?   // AI confidence in categorization
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, externalId, source])
+  @@index([userId, date])
+}
+
+// Generated forecasts
+model Forecast {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Forecast data (13 weeks)
+  weeks     Json     // Array of {weekStart, weekEnd, projected, income, expenses}
+
+  // Metadata
+  generatedAt DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  @@index([userId, isActive])
+}
+
+// Cash alerts
+model Alert {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // "low_cash", "overdue_invoice", "upcoming_bill"
+  severity    String   // "warning", "critical"
+  title       String
+  message     String
+  actionUrl   String?
+
+  dismissed   Boolean  @default(false)
+  dismissedAt DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, dismissed])
+}
