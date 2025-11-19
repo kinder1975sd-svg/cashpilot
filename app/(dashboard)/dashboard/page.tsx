@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { CashFlowChart } from '@/components/dashboard/cash-flow-chart'
 import { UpcomingPayments } from '@/components/dashboard/upcoming-payments'
 import { Alerts } from '@/components/dashboard/alerts'
+import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { Button } from '@/components/ui/button'
 import { generateForecast } from '@/lib/forecasting'
 import { syncXeroTransactions } from '@/lib/xero-sync'
@@ -11,7 +12,7 @@ import { syncXeroTransactions } from '@/lib/xero-sync'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ xero?: string }>
+  searchParams: Promise<{ xero?: string; checkout?: string }>
 }) {
   const { userId } = await auth()
 
@@ -99,12 +100,21 @@ export default async function DashboardPage({
   }
 
   const weeks = forecast.weeks as {
+    weekStart: string
+    weekEnd: string
     weekLabel: string
     projected: number
     income: number
     expenses: number
   }[]
+
+  // Calculate summary metrics
   const currentCash = weeks[0]?.projected || 0
+  const lowestWeek = weeks.reduce((min, week) =>
+    week.projected < min.projected ? week : min
+  )
+  const totalIncome = weeks.reduce((sum, week) => sum + week.income, 0)
+  const totalExpenses = weeks.reduce((sum, week) => sum + week.expenses, 0)
 
   return (
     <div className="space-y-8">
@@ -113,25 +123,83 @@ export default async function DashboardPage({
         <div>
           <h1 className="text-3xl font-bold">Cash Flow Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Current cash:{' '}
-            <span className={currentCash < 0 ? 'text-red-600' : 'text-green-600'}>
-              £{(currentCash / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-            </span>
+            13-week forecast generated {forecast.generatedAt.toLocaleDateString('en-GB', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <a href="/api/xero/connect">Sync Xero</a>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <a href="/api/xero/connect">Sync Data</a>
+          </Button>
+        </div>
       </div>
+
+      {/* Checkout success message */}
+      {params.checkout === 'success' && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-green-800 font-medium">
+            Payment successful! Your plan has been upgraded.
+          </p>
+        </div>
+      )}
 
       {/* Alerts */}
       {alerts.length > 0 && <Alerts alerts={alerts} />}
 
+      {/* Summary Cards */}
+      <SummaryCards
+        currentCash={currentCash}
+        lowestPoint={lowestWeek.projected}
+        lowestPointWeek={lowestWeek.weekLabel}
+        totalIncome={totalIncome}
+        totalExpenses={totalExpenses}
+      />
+
       {/* Chart */}
       <CashFlowChart weeks={weeks} buffer={user.cashBuffer} />
 
-      {/* Upcoming Payments */}
-      <UpcomingPayments userId={user.id} />
+      {/* Bottom section */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Upcoming Payments */}
+        <UpcomingPayments userId={user.id} />
+
+        {/* Quick Actions */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">Quick Actions</h2>
+          <div className="grid gap-3">
+            <Button variant="outline" className="justify-start h-auto py-3" asChild>
+              <a href="/settings">
+                <div className="text-left">
+                  <p className="font-medium">Adjust Safety Buffer</p>
+                  <p className="text-sm text-muted-foreground">
+                    Currently £{(user.cashBuffer / 100).toLocaleString()}
+                  </p>
+                </div>
+              </a>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto py-3" disabled>
+              <div className="text-left">
+                <p className="font-medium">Scenario Planning</p>
+                <p className="text-sm text-muted-foreground">
+                  Coming in Growth plan
+                </p>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto py-3" disabled>
+              <div className="text-left">
+                <p className="font-medium">Export to Excel</p>
+                <p className="text-sm text-muted-foreground">
+                  Coming in Growth plan
+                </p>
+              </div>
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
