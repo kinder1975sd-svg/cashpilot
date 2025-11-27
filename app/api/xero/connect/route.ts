@@ -17,7 +17,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const consentUrl = await xero.buildConsentUrl()
+    const client = xero()
+    const consentUrl = await client.buildConsentUrl()
     return NextResponse.redirect(consentUrl)
   } catch (error) {
     console.error('Xero connect error:', error)

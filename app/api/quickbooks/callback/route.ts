@@ -19,7 +19,8 @@ export async function GET(req: Request) {
 
   try {
     const url = new URL(req.url)
-    const authResponse = await oauthClient.createToken(url.href)
+    const client = oauthClient()
+    const authResponse = await client.createToken(url.href)
     const tokens = authResponse.getJson()
 
     const user = await prisma.user.findUnique({

@@ -17,7 +17,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const authUri = oauthClient.authorizeUri({
+    const client = oauthClient()
+    const authUri = client.authorizeUri({
       scope: [
         'com.intuit.quickbooks.accounting',
       ],

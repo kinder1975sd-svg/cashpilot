@@ -19,7 +19,8 @@ export async function GET(req: Request) {
 
   try {
     const url = new URL(req.url)
-    const tokenSet = await xero.apiCallback(url.href)
+    const client = xero()
+    const tokenSet = await client.apiCallback(url.href)
 
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
@@ -30,8 +31,8 @@ export async function GET(req: Request) {
     }
 
     // Get tenants
-    await xero.updateTenants()
-    const tenants = xero.tenants
+    await client.updateTenants()
+    const tenants = client.tenants
 
     await prisma.user.update({
       where: { id: user.id },
