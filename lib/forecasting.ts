@@ -82,7 +82,7 @@ export async function generateForecast(userId: string) {
   await prisma.forecast.create({
     data: {
       userId,
-      weeks,
+      weeks: weeks as any, // Cast to any for Prisma Json field
       isActive: true,
     },
   })
