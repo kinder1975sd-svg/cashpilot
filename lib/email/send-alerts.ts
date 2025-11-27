@@ -20,8 +20,6 @@ function getAppUrl(): string {
   return url
 }
 
-const APP_URL = getAppUrl()
-
 export async function sendLowCashAlert(userId: string, alert: {
   weekLabel: string
   projectedCash: number
@@ -39,7 +37,7 @@ export async function sendLowCashAlert(userId: string, alert: {
     weekLabel: alert.weekLabel,
     projectedCash: alert.projectedCash,
     safetyBuffer: user.cashBuffer,
-    dashboardUrl: `${APP_URL}/dashboard`,
+    dashboardUrl: `${getAppUrl()}/dashboard`,
   })
 
   await sendEmail({
@@ -97,7 +95,7 @@ export async function sendWeeklyDigest(userId: string) {
     totalIncome,
     totalExpenses,
     alertCount,
-    dashboardUrl: `${APP_URL}/dashboard`,
+    dashboardUrl: `${getAppUrl()}/dashboard`,
   })
 
   await sendEmail({
