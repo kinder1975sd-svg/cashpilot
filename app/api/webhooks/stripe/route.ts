@@ -37,25 +37,26 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session
+        // Use any to bypass Stripe's inconsistent TypeScript types
+        const session: any = event.data.object
 
         if (session.mode === 'subscription' && session.subscription) {
           const subscriptionId = typeof session.subscription === 'string'
             ? session.subscription
             : session.subscription.id
 
-          const subscriptionResponse: any = await stripe.subscriptions.retrieve(subscriptionId)
+          const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
 
-          const userId = subscriptionResponse.metadata.userId
-          const plan = subscriptionResponse.metadata.plan
+          const userId = subscription.metadata.userId
+          const plan = subscription.metadata.plan
 
           await prisma.user.update({
             where: { id: userId },
             data: {
-              stripeSubscriptionId: subscriptionResponse.id,
+              stripeSubscriptionId: subscription.id,
               plan: plan,
               planStatus: 'active',
-              subscriptionEndsAt: new Date(subscriptionResponse.current_period_end * 1000),
+              subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
             },
           })
         }
@@ -97,15 +98,15 @@ export async function POST(req: Request) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice
+        const invoice: any = event.data.object
 
         if (invoice.subscription) {
           const subscriptionId = typeof invoice.subscription === 'string'
             ? invoice.subscription
             : invoice.subscription.id
 
-          const subscriptionResponse: any = await stripe.subscriptions.retrieve(subscriptionId)
-          const userId = subscriptionResponse.metadata.userId
+          const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
+          const userId = subscription.metadata.userId
 
           if (userId) {
             await prisma.user.update({
