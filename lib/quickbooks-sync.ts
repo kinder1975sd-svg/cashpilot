@@ -18,7 +18,7 @@ export async function syncQuickBooksTransactions(userId: string) {
   if (user.qbTokenExpiry && new Date() > user.qbTokenExpiry) {
     // Retry token refresh with exponential backoff
     const newTokens = await retryWithBackoff(
-      () => refreshQuickBooksToken(user.qbRefreshToken),
+      () => refreshQuickBooksToken(user.qbRefreshToken!), // Non-null assertion: already checked at line 11
       {
         maxAttempts: 3,
         initialDelay: 1000,
