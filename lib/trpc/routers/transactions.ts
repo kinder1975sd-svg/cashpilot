@@ -96,18 +96,18 @@ export const transactionsRouter = router({
       })
 
       const income = transactions
-        .filter((t) => t.type === 'INCOME')
-        .reduce((sum, t) => sum + t.amount, 0)
+        .filter((t: any) => t.type === 'INCOME')
+        .reduce((sum: number, t: any) => sum + t.amount, 0)
 
       const expenses = transactions
-        .filter((t) => t.type === 'EXPENSE')
-        .reduce((sum, t) => sum + t.amount, 0)
+        .filter((t: any) => t.type === 'EXPENSE')
+        .reduce((sum: number, t: any) => sum + t.amount, 0)
 
       const net = income - expenses
       const count = transactions.length
 
       // Group by month for chart data
-      const byMonth = transactions.reduce((acc, t) => {
+      const byMonth = transactions.reduce((acc: any, t: any) => {
         const monthKey = t.date.toISOString().slice(0, 7) // YYYY-MM
         if (!acc[monthKey]) {
           acc[monthKey] = { income: 0, expenses: 0 }
@@ -127,7 +127,7 @@ export const transactionsRouter = router({
         transactionCount: count,
         averageIncome: income / input.months,
         averageExpenses: expenses / input.months,
-        byMonth: Object.entries(byMonth).map(([month, data]) => ({
+        byMonth: Object.entries(byMonth).map(([month, data]: [string, any]) => ({
           month,
           income: data.income,
           expenses: data.expenses,

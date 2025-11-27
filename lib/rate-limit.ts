@@ -66,9 +66,11 @@ export const createRateLimiter = (requests: number, window: string) => {
 
   if (upstashUrl && upstashToken) {
     // Production: Use Upstash Redis
+    // Convert window string to milliseconds for Duration
+    const windowMs = window === '1 m' ? 60000 : window === '1 h' ? 3600000 : 60000;
     return new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(requests, window),
+      limiter: Ratelimit.slidingWindow(requests, `${windowMs} ms`),
       analytics: true,
       prefix: '@cashpilot/ratelimit',
     });

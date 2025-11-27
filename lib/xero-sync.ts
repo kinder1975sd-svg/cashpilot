@@ -91,7 +91,7 @@ export async function syncXeroTransactions(userId: string) {
         source: 'xero',
         date: new Date(txn.date!),
         amount: Math.round(amount * 100), // Convert to pence
-        type: txn.type === 'SPEND' ? 'expense' : 'income',
+        type: String(txn.type) === 'SPEND' ? 'expense' : 'income',
         description: txn.reference || 'Unknown',
         contact: txn.contact?.name,
         category: categorizeTransaction(txn.reference || ''),
@@ -99,7 +99,7 @@ export async function syncXeroTransactions(userId: string) {
       update: {
         date: new Date(txn.date!),
         amount: Math.round(amount * 100),
-        type: txn.type === 'SPEND' ? 'expense' : 'income',
+        type: String(txn.type) === 'SPEND' ? 'expense' : 'income',
         description: txn.reference || 'Unknown',
         contact: txn.contact?.name,
         category: categorizeTransaction(txn.reference || ''),

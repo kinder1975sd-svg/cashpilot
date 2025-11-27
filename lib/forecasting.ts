@@ -32,17 +32,17 @@ export async function generateForecast(userId: string) {
 
   // Calculate current cash from transaction history
   // In production, you'd get this from Xero bank balance
-  const currentCash = transactions.reduce((sum, txn) => {
+  const currentCash = transactions.reduce((sum: number, txn: any) => {
     return sum + (txn.type === 'income' ? txn.amount : -txn.amount)
   }, 0)
 
   // Identify recurring transactions
   const recurringIncome = identifyRecurring(
-    transactions.filter((t) => t.type === 'income'),
+    transactions.filter((t: any) => t.type === 'income'),
     'income'
   )
   const recurringExpenses = identifyRecurring(
-    transactions.filter((t) => t.type === 'expense'),
+    transactions.filter((t: any) => t.type === 'expense'),
     'expense'
   )
 
