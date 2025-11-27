@@ -44,20 +44,18 @@ export async function POST(req: Request) {
             ? session.subscription
             : session.subscription.id
 
-          const subscriptionResponse = await stripe.subscriptions.retrieve(subscriptionId)
-          // Stripe SDK returns the subscription directly
-          const subscription = subscriptionResponse as unknown as Stripe.Subscription
+          const subscriptionResponse: any = await stripe.subscriptions.retrieve(subscriptionId)
 
-          const userId = subscription.metadata.userId
-          const plan = subscription.metadata.plan
+          const userId = subscriptionResponse.metadata.userId
+          const plan = subscriptionResponse.metadata.plan
 
           await prisma.user.update({
             where: { id: userId },
             data: {
-              stripeSubscriptionId: subscription.id,
+              stripeSubscriptionId: subscriptionResponse.id,
               plan: plan,
               planStatus: 'active',
-              subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+              subscriptionEndsAt: new Date(subscriptionResponse.current_period_end * 1000),
             },
           })
         }
@@ -106,10 +104,8 @@ export async function POST(req: Request) {
             ? invoice.subscription
             : invoice.subscription.id
 
-          const subscriptionResponse = await stripe.subscriptions.retrieve(subscriptionId)
-          // Stripe SDK returns the subscription directly
-          const subscription = subscriptionResponse as unknown as Stripe.Subscription
-          const userId = subscription.metadata.userId
+          const subscriptionResponse: any = await stripe.subscriptions.retrieve(subscriptionId)
+          const userId = subscriptionResponse.metadata.userId
 
           if (userId) {
             await prisma.user.update({
