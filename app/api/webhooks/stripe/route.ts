@@ -32,10 +32,10 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session
 
         if (session.mode === 'subscription' && session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscriptionResponse = await stripe.subscriptions.retrieve(
             session.subscription as string
           )
-
+          const subscription = subscriptionResponse as Stripe.Subscription
           const userId = subscription.metadata.userId
           const plan = subscription.metadata.plan
 
@@ -90,9 +90,10 @@ export async function POST(req: Request) {
         const invoice = event.data.object as Stripe.Invoice
 
         if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscriptionResponse = await stripe.subscriptions.retrieve(
             invoice.subscription as string
           )
+          const subscription = subscriptionResponse as Stripe.Subscription
           const userId = subscription.metadata.userId
 
           if (userId) {
